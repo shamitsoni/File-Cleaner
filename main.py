@@ -1,53 +1,35 @@
 import os
-import argparse
-from send2trash import send2trash
 
-# Example: 'python main.py C:\Users\{User}\Desktop\ .txt delete' ----> Will permanently delete all text files on the Desktop
-
-
-# Will recycle files
-def recycle_files(directory, extension):
-    print('(INFO) Files will be moved to the recycle bin.')
-    confirm = input('Enter (y) to continue or any key to exit: ')
-
-    if confirm.strip().lower() == 'y':
-        for root, dirs, files in os.walk(directory):
-            for file in files:
-                if file.endswith(extension):
-                    file_path = os.path.join(root, file)
-                    print(f"Moving file to recycle bin: {file_path}")
-                    send2trash(file_path)
-    return
+import click
+from clean import recycle_files, delete_files
+from manage import move_files
 
 
-# Will permanently delete files
-def delete_files(directory, extension):
-    print('(WARNING) Files will NOT be recycled and will be PERMANENTLY deleted! Proceed with caution.')
-    confirm = input('Enter (y) to continue or any key to exit: ')
+# Set up command line arguments
+@click.command()
+@click.argument('action', type=click.Choice(['delete', 'recycle', 'move']))
+@click.argument('directory', type=click.Path(exists=True))
+@click.argument('extension')
+@click.argument('destination', required=False)
+def main(action, directory, extension, destination):
+    # Checks to make sure the directory is not empty and exists
+    if not directory:
+        raise click.UsageError('Directory is required for this action.')
+    if not os.path.exists(directory):
+        raise click.UsageError(f'Directory {directory} does not exist.')
 
-    if confirm.strip().lower() == 'y':
-        for root, dirs, files in os.walk(directory):
-            for file in files:
-                if file.endswith(extension):
-                    file_path = os.path.join(root, file)
-                    print(f"Removing file: {file_path}")
-                    os.remove(file_path)
-    return
-
-
-def main():
-    # Handle command line arguments
-    parser = argparse.ArgumentParser(description="Handle files with a specific extension from a directory.")
-    parser.add_argument("directory", type=str, help="Directory to clean")
-    parser.add_argument("extension", type=str, help="File extension to handle (e.g., .txt)")
-    parser.add_argument("action", type=str, choices=['delete', 'recycle'], help="Action to perform on the files (delete or recycle)")
-    args = parser.parse_args()
-
-    # Map each action argument to the respective function
-    map_actions = {'delete': delete_files, 'recycle': recycle_files}
-
-    # Call the function based on the input
-    map_actions[args.action](args.directory, args.extension)
+    # Call to the functions based on action type
+    if action == 'delete':
+        delete_files(directory, extension)
+    elif action == 'recycle':
+        recycle_files(directory, extension)
+    elif action == 'move':
+        # Checks to make sure the destination is not empty and exists
+        if not destination:
+            raise click.UsageError('Destination is required for move action.')
+        if not os.path.exists(destination):
+            raise click.UsageError(f'Directory {destination} does not exist.')
+        move_files(directory, extension, destination)
 
 
 if __name__ == "__main__":
