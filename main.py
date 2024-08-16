@@ -1,13 +1,12 @@
 import os
-
 import click
 from clean import recycle_files, delete_files
-from manage import move_files
+from manage import move_files, copy_files
 
 
 # Set up command line arguments
 @click.command()
-@click.argument('action', type=click.Choice(['delete', 'recycle', 'move']))
+@click.argument('action', type=click.Choice(['delete', 'recycle', 'move', 'copy']))
 @click.argument('directory', type=click.Path(exists=True))
 @click.argument('extension')
 @click.argument('destination', required=False)
@@ -23,13 +22,17 @@ def main(action, directory, extension, destination):
         delete_files(directory, extension)
     elif action == 'recycle':
         recycle_files(directory, extension)
-    elif action == 'move':
+    elif action in ['move', 'copy']:
         # Checks to make sure the destination is not empty and exists
         if not destination:
-            raise click.UsageError('Destination is required for move action.')
+            raise click.UsageError(f'Destination is required for {action} action.')
         if not os.path.exists(destination):
             raise click.UsageError(f'Directory {destination} does not exist.')
-        move_files(directory, extension, destination)
+
+        if action == 'move':
+            move_files(directory, extension, destination)
+        else:
+            copy_files(directory, extension, destination)
 
 
 if __name__ == "__main__":
