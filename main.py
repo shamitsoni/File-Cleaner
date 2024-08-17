@@ -8,9 +8,9 @@ from manage import move_files, copy_files
 @click.command()
 @click.argument('action', type=click.Choice(['delete', 'recycle', 'move', 'copy']))
 @click.argument('directory', type=click.Path(exists=True))
-@click.argument('extension')
+@click.argument('extensions', nargs=-1)
 @click.argument('destination', required=False)
-def main(action, directory, extension, destination):
+def main(action, directory, extensions, destination):
     # Checks to make sure the directory is not empty and exists
     if not directory:
         raise click.UsageError('Directory is required for this action.')
@@ -19,9 +19,9 @@ def main(action, directory, extension, destination):
 
     # Call to the functions based on action type
     if action == 'delete':
-        delete_files(directory, extension)
+        delete_files(directory, extensions)
     elif action == 'recycle':
-        recycle_files(directory, extension)
+        recycle_files(directory, extensions)
     elif action in ['move', 'copy']:
         # Checks to make sure the destination is not empty and exists
         if not destination:
@@ -30,9 +30,9 @@ def main(action, directory, extension, destination):
             raise click.UsageError(f'Directory {destination} does not exist.')
 
         if action == 'move':
-            move_files(directory, extension, destination)
+            move_files(directory, extensions, destination)
         else:
-            copy_files(directory, extension, destination)
+            copy_files(directory, extensions, destination)
 
 
 if __name__ == "__main__":
